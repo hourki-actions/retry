@@ -48,6 +48,7 @@ def extract_failed_jobs(data) -> List[jobItem]:
 
 def extract_failed_steps_from_job(data, job_index):
     failure_count = 0
+    skip_count = 0
     for step in data["jobs"][job_index]["steps"]:
         if not step["name"].startswith("Set up") and not step["name"].startswith("Post") and not step["name"] == "Complete job":
             step_name = step["name"]
@@ -56,7 +57,9 @@ def extract_failed_steps_from_job(data, job_index):
                 logger.info(
                     'Failed Step to capture with name {}'.format(step_name))
                 failure_count += 1
-    return failure_count
+            elif step_conclusion == "skipped":
+                skip_count += 1
+    return failure_count, skip_count
 
 
 def check_workflow_api(token, inputs, api_url, run_id):
@@ -77,7 +80,7 @@ def check_workflow_api(token, inputs, api_url, run_id):
             failed_jobs = len(jobs)
             logger.info('{} failed job(s)'.format(failed_jobs))
             for job in jobs:
-                failed_steps_per_job = extract_failed_steps_from_job(data, job.jobApiIndex)
-                logger.info('{} failed step(s) for job {}'.format(failed_steps_per_job, job.jobName))
+                failed_steps_per_job, skipped_steps_per_job = extract_failed_steps_from_job(data, job.jobApiIndex)
+                logger.info('{} failed step(s) and {} skipped step(s) for job {}'.format(failed_steps_per_job, skipped_steps_per_job, job.jobName))
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
