@@ -12,7 +12,6 @@ inputs:
     description: 'The maximum number of retries for failed jobs within a workflow'
     default: 3
 
-
 runs:
   using: 'docker'
   image: 'Dockerfile'
