@@ -1,6 +1,8 @@
 import os
 import urllib3
 import json
+import time
+from typing import List
 from dataclasses import dataclass
 
 from url_builder import build_url
@@ -22,10 +24,22 @@ def get_workflow_info() -> RepoInfo:
     repo = json_data['repository']['name']
     return RepoInfo(owner=owner, repo=repo)
 
+def extract_failed_jobs(data) -> List[str]:
+    job_names = []
+    while True:
+        for job in data["jobs"]:
+            job_name = job["name"]
+            if job_name != "retry-action":
+                job_names.append(job_name)
+        if all(job["status"] in ["completed", "failed", "cancelled"] for job in data["jobs"]):
+            break
+        time.sleep(10)
+    return job_names
 
-def extract_failed_jobs(data):
+
+def extract_failed_steps_from_job(data, job_name):
     failure_count = 0
-    for step in data["jobs"][0]["steps"]:
+    for step in data["jobs"][job_name]["steps"]:
         if not step["name"].startswith("Set up") and not step["name"].startswith("Post"):
             step_name = step["name"]
             step_status = step["status"]
@@ -52,6 +66,9 @@ def check_workflow_api(token, inputs, api_url, run_id):
             logger.info('get API logs for workflow with ID {}'.format(run_id))
             data = json.loads(response.data)
             failed_jobs = extract_failed_jobs(data)
-            logger.info('{} failed jobs was captured'.format(failed_jobs))
+            logger.info('jobs {}'.format(failed_jobs))
+            for job_name in failed_jobs:
+                failed_steps_per_job = extract_failed_steps_from_job(data, job_name)
+                logger.info('steps per job {} : {}'.format(job_name, failed_steps_per_job))
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
