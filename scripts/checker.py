@@ -26,7 +26,6 @@ class jobItem:
     jobApiIndex: int
 
 
-lock = threading.Lock()
 logger = Logger('Retry.checker')
 
 
@@ -37,23 +36,26 @@ def get_workflow_info() -> RepoInfo:
     return RepoInfo(owner=owner, repo=repo)
 
 
-def rerun_failed_job_by_id(id, job_name, api_url, inputs, token):
+def rerun_failed_job_by_id(id, job_name, api_url, inputs, token, lock):
     action_path = ActionMaps.get_action_path('RERUN_WORKFLOW', id)
     headers = {
         'Authorization': f'Bearer {token}'
     }
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
     logger.info('Posting Rerun Workflow URL: {}'.format(url))
-    with lock:
-        try:
-            response = urllib3.request("POST", url, headers=headers)
-            if response.status != 201:
-                logger.error('Failed to rerun job {} with status code {}'.format(job_name, response.status))
-                return
-            else:
-                logger.info('Rerun Job {}'.format(job_name))
-        except urllib3.exceptions.NewConnectionError:
-            logger.error("Connection failed.")
+    lock.acquire()
+    try:
+        response = urllib3.request("POST", url, headers=headers)
+        if response.status != 201:
+            logger.error('Failed to rerun job {} with status code {}'.format(job_name, response.status))
+            return
+        else:
+            logger.info('Rerun Job {}'.format(job_name))
+    except urllib3.exceptions.NewConnectionError:
+        logger.error("Connection failed.")
+    finally:
+        lock.release()
+
 
 
 def extract_failed_jobs(data) -> List[jobItem]:
@@ -104,12 +106,13 @@ def check_workflow_api(token, inputs, api_url, run_id):
             logger.info('{} failed job(s) was captured'.format(failed_jobs))
             threads = []
             for job in jobs:
+                lock = threading.Lock()
                 failed_steps_per_job, skipped_steps_per_job = extract_steps_count_from_job(data, job.jobApiIndex)
                 logger.info('{} failed step(s) and {} skipped step(s) for job {}'.format(failed_steps_per_job,
                                                                                          skipped_steps_per_job,
                                                                                          job.jobName))
                 t = threading.Thread(target=rerun_failed_job_by_id,
-                                     args=(job.jobId, job.jobName, api_url, inputs, token))
+                                     args=(job.jobId, job.jobName, api_url, inputs, token, lock))
                 threads.append(t)
                 t.start()
                 t.join()
