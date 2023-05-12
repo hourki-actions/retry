@@ -1,5 +1,7 @@
 import os
 import urllib3
+import threading
+import time
 import json
 from typing import List
 from dataclasses import dataclass
@@ -36,7 +38,7 @@ def get_workflow_info() -> RepoInfo:
 def rerun_failed_job_by_id(id, job_name, api_url, inputs, token):
     action_path = ActionMaps.get_action_path('RERUN_WORKFLOW', id)
     headers = {
-        'Authorization': 'Bearer DUMMY_TOKEN'
+        'Authorization': f'Bearer {token}'
     }
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
     logger.info('Posting Rerun Workflow URL: {}'.format(url))
@@ -96,9 +98,16 @@ def check_workflow_api(token, inputs, api_url, run_id):
             jobs = extract_failed_jobs(data)
             failed_jobs = len(jobs)
             logger.info('{} failed job(s) was captured'.format(failed_jobs))
+            threads = []
             for job in jobs:
                 failed_steps_per_job, skipped_steps_per_job = extract_steps_count_from_job(data, job.jobApiIndex)
                 logger.info('{} failed step(s) and {} skipped step(s) for job {}'.format(failed_steps_per_job, skipped_steps_per_job, job.jobName))
-                rerun_failed_job_by_id(job.jobId, job.jobName, api_url, inputs, token)
+                t = threading.Thread(target= rerun_failed_job_by_id, args=(job.jobId, job.jobName, api_url, inputs, token))
+                threads.append(t)
+                t.start()
+                t.join()
+                #rerun_failed_job_by_id(job.jobId, job.jobName, api_url, inputs, token)
+            for t in threads:
+                t.join()
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
