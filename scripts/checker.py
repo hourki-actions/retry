@@ -44,7 +44,7 @@ def rerun_failed_job_by_id(id, job_name, api_url, inputs, token, lock):
     logger.info('Posting Rerun Workflow URL: {}'.format(url))
     lock.acquire()
     try:
-        response = urllib3.request("POST", url, headers=headers)
+        response = urllib3.request("GET", url, headers=headers)
         if response.status != 201:
             logger.error('Failed to rerun job {} with status code {}'.format(job_name, response.status))
             return
