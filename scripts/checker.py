@@ -33,20 +33,20 @@ def get_workflow_info() -> RepoInfo:
     return RepoInfo(owner=owner, repo=repo)
 
 
-def rerun_failed_job_by_id(id, api_url, inputs, token):
+def rerun_failed_job_by_id(id, job_name, api_url, inputs, token):
     action_path = ActionMaps.get_action_path('RERUN_WORKFLOW', id)
     headers = {
         'Authorization': f'Bearer {token}'
     }
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
-    logger.info('Posting Workflow URL: {}'.format(url))
+    logger.info('Posting Rerun Workflow URL: {}'.format(url))
     try:
         response = urllib3.request("POST", url, headers=headers)
         if response.status != 201:
-            logger.error('Failed to rerun jobs with status code {}'.format(response.status))
+            logger.error('Failed to rerun job {} with status code {}'.format(job_name, response.status))
             return
         else:
-            logger.info('Rerun Job with id {}'.format(id))
+            logger.info('Rerun Job {}'.format(job_name))
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
 
@@ -99,7 +99,6 @@ def check_workflow_api(token, inputs, api_url, run_id):
             for job in jobs:
                 failed_steps_per_job, skipped_steps_per_job = extract_steps_count_from_job(data, job.jobApiIndex)
                 logger.info('{} failed step(s) and {} skipped step(s) for job {}'.format(failed_steps_per_job, skipped_steps_per_job, job.jobName))
-                logger.info('rerun failed job with id {}'.format(job.jobId))
-                rerun_failed_job_by_id(job.jobId, api_url, inputs, token)
+                rerun_failed_job_by_id(job.jobId, job.jobName, api_url, inputs, token)
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
