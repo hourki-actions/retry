@@ -29,11 +29,10 @@ def extract_failed_jobs(data) -> List[str]:
     while True:
         for job in data["jobs"]:
             job_name = job["name"]
-            if job_name != "retry-action":
+            if job_name != "retry-action" and job_name not in job_names:
                 job_names.append(job_name)
         if all(job["status"] in ["completed", "failed", "cancelled"] for job in data["jobs"]):
             break
-        time.sleep(10)
     return job_names
 
 
