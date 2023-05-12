@@ -20,7 +20,8 @@ def extract_steps_count_from_job(data, job_index, job_name):
     failure_count = 0
     skip_count = 0
     for step in data["jobs"][job_index]["steps"]:
-        if not step["name"].startswith("Set up") and not step["name"].startswith("Post") and not step["name"] == "Complete job":
+        excluded_steps = ["Set up", "Post", "Complete job"]
+        if not any(step["name"].startswith(name) for name in excluded_steps):
             step_conclusion = step["conclusion"]
             if step_conclusion == "failure":
                 failure_count += 1
