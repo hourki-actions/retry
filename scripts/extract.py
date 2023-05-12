@@ -26,7 +26,7 @@ def extract_steps_count_from_job(data, job_index, job_name):
                 failure_count += 1
             elif step_conclusion == "skipped":
                 skip_count += 1
-    logger.info('{} / {} failed/skipped step(s) for job "{}"'.format(failure_count, skip_count, job_name))
+    logger.info('{} failed / {} skipped step(s) for job "{}"'.format(failure_count, skip_count, job_name))
     return failure_count, skip_count
 
 
