@@ -15,7 +15,7 @@ class RepoInfo:
     repo: str
 
 
-logger = Logger('Retry.checker')
+logger = Logger('Retry.check')
 
 
 def fetch_workflow_inputs() -> RepoInfo:
