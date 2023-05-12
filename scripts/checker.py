@@ -1,7 +1,6 @@
 import os
 import urllib3
 import threading
-import time
 import json
 from typing import List
 from dataclasses import dataclass
@@ -57,6 +56,23 @@ def rerun_failed_job_by_id(id, job_name, api_url, inputs, token, lock):
         lock.release()
 
 
+def rerun_all_failed_jobs(run_id, api_url, inputs, token):
+    action_path = ActionMaps.get_action_path('RERUN_ALL_FAILED_WORKFLOW_JOBS', run_id)
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+    logger.info('Posting Rerun All failed Workflow URL: {}'.format(url))
+    try:
+        response = urllib3.request("POST", url, headers=headers)
+        if response.status != 201:
+            logger.error('Failed to rerun all jobs with workflow id {} '.format(run_id))
+            return
+        else:
+            logger.info('Rerun All Jobs with status {}'.format(response.status))
+    except urllib3.exceptions.NewConnectionError:
+        logger.error("Connection failed.")
+
 
 def extract_failed_jobs(data) -> List[jobItem]:
     jobs_items = []
@@ -104,20 +120,21 @@ def check_workflow_api(token, inputs, api_url, run_id):
             jobs = extract_failed_jobs(data)
             failed_jobs = len(jobs)
             logger.info('{} failed job(s) was captured'.format(failed_jobs))
-            threads = []
-            for job in jobs:
-                lock = threading.Lock()
-                failed_steps_per_job, skipped_steps_per_job = extract_steps_count_from_job(data, job.jobApiIndex)
-                logger.info('{} failed step(s) and {} skipped step(s) for job {}'.format(failed_steps_per_job,
-                                                                                         skipped_steps_per_job,
-                                                                                         job.jobName))
-                t = threading.Thread(target=rerun_failed_job_by_id,
-                                     args=(job.jobId, job.jobName, api_url, inputs, token, lock))
-                threads.append(t)
-                t.start()
-                t.join()
-                # rerun_failed_job_by_id(job.jobId, job.jobName, api_url, inputs, token)
-            for t in threads:
-                t.join()
+            rerun_all_failed_jobs(run_id, api_url, inputs, token)
+            # threads = []
+            # for job in jobs:
+            #     lock = threading.Lock()
+            #     failed_steps_per_job, skipped_steps_per_job = extract_steps_count_from_job(data, job.jobApiIndex)
+            #     logger.info('{} failed step(s) and {} skipped step(s) for job {}'.format(failed_steps_per_job,
+            #                                                                              skipped_steps_per_job,
+            #                                                                              job.jobName))
+            #     t = threading.Thread(target=rerun_failed_job_by_id,
+            #                          args=(job.jobId, job.jobName, api_url, inputs, token, lock))
+            #     threads.append(t)
+            #     t.start()
+            #     t.join()
+            #     # rerun_failed_job_by_id(job.jobId, job.jobName, api_url, inputs, token)
+            # for t in threads:
+            #     t.join()
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
