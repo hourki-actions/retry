@@ -1,0 +1,35 @@
+name: 'Build Action Version'
+on:
+  workflow_dispatch:
+    inputs:
+      releaseTag:
+        description: 'Release Github Tag'
+        required: false
+        default: false
+        type: choice
+        options:
+          - true
+          - false
+
+jobs:
+  bump-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+
+      - name: Bump version and push tag
+        id: github_tag
+        uses: mathieudutour/github-tag-action@v6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        if: ${{ inputs.releaseTag == 'true' }}
+        with:
+          tag: ${{ steps.github_tag.outputs.new_tag }}
+          name: Release ${{ steps.github_tag.outputs.new_tag }}
+          body: ${{ steps.github_tag.outputs.changelog }}
