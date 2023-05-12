@@ -66,7 +66,7 @@ def rerun_all_failed_jobs(run_id, api_url, inputs, token):
     try:
         response = urllib3.request("POST", url, headers=headers)
         if response.status != 201:
-            logger.error('Failed to rerun all jobs with workflow id {} '.format(run_id))
+            logger.error('Failed to rerun all jobs with status id {} w '.format(response.status))
             return
         else:
             logger.info('Rerun All Jobs with status {}'.format(response.status))
