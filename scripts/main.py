@@ -1,12 +1,10 @@
+import json
 import os
 import urllib3
-import json
 from dataclasses import dataclass
 
 from extract import *
-from builder import build_url
-from actionTypes import types
-from logger import Logger
+from retry import *
 
 
 @dataclass
@@ -25,33 +23,12 @@ def fetch_workflow_inputs() -> RepoInfo:
     return RepoInfo(owner=owner, repo=repo)
 
 
-def rerun_all_failed_jobs(run_id, api_url, inputs, token):
-    headers = {
-        'Authorization': f'Bearer {token}'
-    }
-    action_path = types.get_action_path('RERUN_ALL_FAILED_WORKFLOW_JOBS', run_id)
-    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
-    logger.info('Posting Rerun All failed Workflow URL: {}'.format(url))
-    try:
-        response = urllib3.request("POST", url, headers=headers)
-        if response.status != 201:
-            logger.error('Failed to rerun all jobs with status {}'.format(response.status))
-            return
-        else:
-            logger.info('Rerun All Jobs with status {}'.format(response.status))
-    except urllib3.exceptions.NewConnectionError:
-        logger.error("Connection failed.")
-
-
 def setup(token, inputs, api_url, run_id):
-    headers = {
-        'Authorization': f'Bearer {token}'
-    }
-    action_path = types.get_action_path('EXTRACT_WORKFLOW_DATA', run_id)
-    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
-    logger.info('Posting Workflow URL: {}'.format(url))
     try:
-        response = urllib3.request("GET", url, headers=headers)
+        action_path = types.get_action_path('EXTRACT_WORKFLOW_DATA', run_id)
+        url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+        logger.info('Posting Workflow URL: {}'.format(url))
+        response = build_request(token=token, url=url, method="GET")
         if response.status != 200:
             logger.error('Failed to get API logs with status code {}'.format(response.status))
             return
