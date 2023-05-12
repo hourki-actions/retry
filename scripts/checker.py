@@ -59,9 +59,7 @@ def rerun_failed_job_by_id(id, job_name, api_url, inputs, token, lock):
 def rerun_all_failed_jobs(run_id, api_url, inputs, token):
     action_path = ActionMaps.get_action_path('RERUN_ALL_FAILED_WORKFLOW_JOBS', run_id)
     headers = {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': f'Bearer {token}',
-        'X-GitHub-Api-Version': '2022-11-28'
+        'Authorization': f'Bearer {token}'
     }
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
     logger.info('Posting Rerun All failed Workflow URL: {}'.format(url))

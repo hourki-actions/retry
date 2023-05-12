@@ -9,3 +9,4 @@ if __name__ == "__main__":
     repoInfo = get_workflow_info()
 
     check_workflow_api(repo_token, repoInfo, api_url, runId)
+    rerun_all_failed_jobs(runId, api_url, repoInfo, repo_token)
