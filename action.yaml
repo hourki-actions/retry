@@ -4,7 +4,7 @@ author: 'hourki-actions'
 inputs:
   token:
     description: 'GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)'
-    default: ${{ github.token }}
+    required: true
   workflow_run_id:
     description: 'Workflow Run ID'
     required: true
