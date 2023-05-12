@@ -24,7 +24,7 @@ jobs:
         id: github_tag
         uses: mathieudutour/github-tag-action@v6.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.PUSH_TOKEN }}
 
       - name: Create a GitHub release
         uses: ncipollo/release-action@v1
