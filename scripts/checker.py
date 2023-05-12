@@ -23,6 +23,20 @@ def get_workflow_info() -> RepoInfo:
     return RepoInfo(owner=owner, repo=repo)
 
 
+def extract_failed_jobs(data):
+    failure_count = 0
+    for step in data["jobs"][0]["steps"]:
+        if not step["name"].startswith("Set up") and not step["name"].startswith("Post"):
+            step_name = step["name"]
+            step_status = step["status"]
+            step_conclusion = step["conclusion"]
+            logger.info(
+                'Job with name {} status {} conclusion {}'.format(step_name, step_status, step_conclusion))
+            if step_conclusion == "failure":
+                failure_count += 1
+    return failure_count
+
+
 def check_workflow_api(token, inputs, api_url, run_id):
     headers = {
         'Authorization': f'Bearer {token}'
@@ -35,15 +49,9 @@ def check_workflow_api(token, inputs, api_url, run_id):
             logger.error('Failed to get API logs with status code {}'.format(response.status))
             return
         else:
-            logger.info('get API logs with ID {}'.format(run_id))
-            logger.info('logs {}'.format(response.data))
+            logger.info('get API logs for workflow with ID {}'.format(run_id))
             data = json.loads(response.data)
-            for step in data["jobs"][0]["steps"]:
-                if not step["name"].startswith("Set up") and not step["name"].startswith("Post"):
-                    step_name = step["name"]
-                    step_status = step["status"]
-                    step_conclusion = step["conclusion"]
-                    logger.info(
-                        'Job with name {} status {} conclusion {}'.format(step_name, step_status, step_conclusion))
+            failed_jobs = extract_failed_jobs(data)
+            logger.info('{} failed jobs was captured'.format(failed_jobs))
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
