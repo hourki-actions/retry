@@ -38,7 +38,7 @@ def extract_failed_jobs(data) -> List[jobItem]:
         for job in jobs:
             job_name = job["name"]
             job_index = jobs.index(job)
-            logger.info('Post job {} with status {} and conclusion {}'.format(job_name))
+            logger.info('Post job {} with status {} and conclusion {}'.format(job_name, job["status"], job["conclusion"]))
             job_item = jobItem(jobName=job_name, jobStatus=job["status"], jobCompletion=job["conclusion"], jobApiIndex=job_index)
             if job_name != "retry-action" and job_name not in jobs_items:
                 jobs_items.append(job_item)
