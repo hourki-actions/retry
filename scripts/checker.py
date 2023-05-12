@@ -45,7 +45,7 @@ def rerun_failed_job_by_id(id, job_name, api_url, inputs, token, lock):
     lock.acquire()
     try:
         response = urllib3.request("GET", url, headers=headers)
-        if response.status != 201:
+        if response.status != 200:
             logger.error('Failed to rerun job {} with status code {}'.format(job_name, response.status))
             return
         else:
