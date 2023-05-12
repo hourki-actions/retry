@@ -32,7 +32,7 @@ def extract_failed_jobs(data) -> List[str]:
             logger.info('Post job {}'.format(job_name))
             if job_name != "retry-action" and job_name not in job_names:
                 job_names.append(job_name)
-        if all(job["status"] in ["completed", "failed", "cancelled"] for job in data["jobs"]):
+        if all(job["status"] in ["completed", "failed", "cancelled"] for job in data["jobs"] if job["name"] != "retry-action"):
             break
     return job_names
 
