@@ -5,6 +5,7 @@ from typing import List
 from dataclasses import dataclass
 
 from url_builder import build_url
+from actionMaps import ActionMaps
 from logger import Logger
 
 
@@ -16,7 +17,7 @@ class RepoInfo:
 @dataclass
 class jobItem:
     jobName: str
-    jobRunId: str
+    jobId: str
     jobStatus: str
     jobCompletion: str
     jobApiIndex: int
@@ -31,6 +32,24 @@ def get_workflow_info() -> RepoInfo:
     repo = json_data['repository']['name']
     return RepoInfo(owner=owner, repo=repo)
 
+
+def rerun_failed_job_by_id(id, token):
+    action_path = ActionMaps.get_action_path('RERUN_WORKFLOW', id)
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+    logger.info('Posting Workflow URL: {}'.format(url))
+    try:
+        response = urllib3.request("POST", url, headers=headers)
+        if response.status != 201:
+            logger.error('Failed to rerun jobs with status code {}'.format(response.status))
+            return
+        else:
+            logger.info('Rerun Job with id {}'.format(id))
+    except urllib3.exceptions.NewConnectionError:
+        logger.error("Connection failed.")
+
 def extract_failed_jobs(data) -> List[jobItem]:
     jobs_items = []
     jobs = data["jobs"]
@@ -39,23 +58,20 @@ def extract_failed_jobs(data) -> List[jobItem]:
             job_name = job["name"]
             job_index = jobs.index(job)
             if job_name != "retry-action" and job_name not in jobs_items and job["conclusion"] == "failure":
-                job_item = jobItem(jobName=job_name, jobRunId=job["run_id"], jobStatus=job["status"], jobCompletion=job["conclusion"], jobApiIndex=job_index)
+                job_item = jobItem(jobName=job_name, jobRunId=job["id"], jobStatus=job["status"], jobCompletion=job["conclusion"], jobApiIndex=job_index)
                 jobs_items.append(job_item)
         if all(job["status"] in ["completed", "failed", "cancelled"] for job in jobs if job["name"] != "retry-action"):
             break
     return jobs_items
 
 
-def extract_failed_steps_from_job(data, job_index):
+def extract_steps_count_from_job(data, job_index):
     failure_count = 0
     skip_count = 0
     for step in data["jobs"][job_index]["steps"]:
         if not step["name"].startswith("Set up") and not step["name"].startswith("Post") and not step["name"] == "Complete job":
-            step_name = step["name"]
             step_conclusion = step["conclusion"]
             if step_conclusion == "failure":
-                logger.info(
-                    'Failed Step to capture with name {}'.format(step_name))
                 failure_count += 1
             elif step_conclusion == "skipped":
                 skip_count += 1
@@ -66,7 +82,8 @@ def check_workflow_api(token, inputs, api_url, run_id):
     headers = {
         'Authorization': f'Bearer {token}'
     }
-    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, run_id=run_id)
+    action_path = ActionMaps.get_action_path('EXTRACT_WORKFLOW_DATA', run_id)
+    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
     logger.info('Posting Workflow URL: {}'.format(url))
     try:
         response = urllib3.request("GET", url, headers=headers)
@@ -80,7 +97,9 @@ def check_workflow_api(token, inputs, api_url, run_id):
             failed_jobs = len(jobs)
             logger.info('{} failed job(s)'.format(failed_jobs))
             for job in jobs:
-                failed_steps_per_job, skipped_steps_per_job = extract_failed_steps_from_job(data, job.jobApiIndex)
+                failed_steps_per_job, skipped_steps_per_job = extract_steps_count_from_job(data, job.jobApiIndex)
                 logger.info('{} failed step(s) and {} skipped step(s) for job {}'.format(failed_steps_per_job, skipped_steps_per_job, job.jobName))
+                logger.info('rerun failed job with id {}'.format(job.jobId))
+                rerun_failed_job_by_id(job.jobId, token)
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
