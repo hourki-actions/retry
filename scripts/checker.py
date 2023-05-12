@@ -36,5 +36,6 @@ def check_workflow_api(token, inputs, api_url, run_id):
             return
         else:
             logger.info('get API logs with ID {}'.format(run_id))
+            logger.info('logs {}'.format(response.data))
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
