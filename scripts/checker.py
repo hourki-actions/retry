@@ -49,7 +49,7 @@ def extract_failed_jobs(data) -> List[jobItem]:
 def extract_failed_steps_from_job(data, job_index):
     failure_count = 0
     for step in data["jobs"][job_index]["steps"]:
-        if not step["name"].startswith("Set up") and not step["name"].startswith("Post") and not step_name["name"] == "Complete job":
+        if not step["name"].startswith("Set up") and not step["name"].startswith("Post") and not step["name"] == "Complete job":
             step_name = step["name"]
             step_conclusion = step["conclusion"]
             if step_conclusion == "failure":
