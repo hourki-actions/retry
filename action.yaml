@@ -1,0 +1,18 @@
+name: Retry Workflow Action
+description: Github action to retry failed jobs within a github workflow.
+author: 'hourki-actions'
+inputs:
+  token:
+    description: 'GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)'
+    default: ${{ github.token }}
+  workflow_run_id:
+    description: 'Workflow Run ID'
+    required: true
+  max_retries:
+    description: 'The maximum number of retries for failed jobs within a workflow'
+    default: 3
+
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
