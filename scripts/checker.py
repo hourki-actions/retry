@@ -1,7 +1,6 @@
 import os
 import urllib3
 import json
-import time
 from typing import List
 from dataclasses import dataclass
 
@@ -39,8 +38,8 @@ def extract_failed_jobs(data) -> List[jobItem]:
         for job in jobs:
             job_name = job["name"]
             job_index = jobs.index(job)
-            job_item = jobItem(jobName=job_name, jobRunId=job["run_id"], jobStatus=job["status"], jobCompletion=job["conclusion"], jobApiIndex=job_index)
-            if job_name != "retry-action" and job_name not in jobs_items:
+            if job_name != "retry-action" and job_name not in jobs_items and job["conclusion"] == "failure":
+                job_item = jobItem(jobName=job_name, jobRunId=job["run_id"], jobStatus=job["status"], jobCompletion=job["conclusion"], jobApiIndex=job_index)
                 jobs_items.append(job_item)
         if all(job["status"] in ["completed", "failed", "cancelled"] for job in jobs if job["name"] != "retry-action"):
             break
@@ -50,12 +49,12 @@ def extract_failed_jobs(data) -> List[jobItem]:
 def extract_failed_steps_from_job(data, job_index):
     failure_count = 0
     for step in data["jobs"][job_index]["steps"]:
-        if not step["name"].startswith("Set up") and not step["name"].startswith("Post"):
+        if not step["name"].startswith("Set up") and not step["name"].startswith("Post") and not step_name["name"] == "Complete job":
             step_name = step["name"]
             step_conclusion = step["conclusion"]
-            logger.info(
-                'Step with name {} conclusion {}'.format(step_name, step_conclusion))
             if step_conclusion == "failure":
+                logger.info(
+                    'Failed Step to capture with name {}'.format(step_name))
                 failure_count += 1
     return failure_count
 
@@ -75,8 +74,10 @@ def check_workflow_api(token, inputs, api_url, run_id):
             logger.info('get API logs for workflow with ID {}'.format(run_id))
             data = json.loads(response.data)
             jobs = extract_failed_jobs(data)
+            failed_jobs = len(jobs)
+            logger.info('{} failed job(s)'.format(failed_jobs))
             for job in jobs:
                 failed_steps_per_job = extract_failed_steps_from_job(data, job.jobApiIndex)
-                logger.info('{} failed steps for job {}'.format(failed_steps_per_job, job.jobName))
+                logger.info('{} failed step(s) for job {}'.format(failed_steps_per_job, job.jobName))
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
