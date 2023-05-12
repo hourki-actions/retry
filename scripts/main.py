@@ -33,7 +33,7 @@ def setup(token, inputs, api_url, run_id):
             logger.error('Failed to get API logs with status code {}'.format(response.status))
             return
         else:
-            logger.info('get API logs for workflow with ID {}'.format(run_id))
+            logger.info('Fetch workflow inputs with ID {}'.format(run_id))
             data = json.loads(response.data)
             jobs = extract_failed_jobs(data)
             failed_jobs = len(jobs)
