@@ -1,13 +1,11 @@
 import os
 import urllib3
-import threading
 import json
-from typing import List
 from dataclasses import dataclass
 
-from urlBuilder import build_url
-from actionMaps import ActionMaps
-from extracter import *
+from extract import *
+from builder import build_url
+from actionTypes import types
 from logger import Logger
 
 
@@ -20,7 +18,7 @@ class RepoInfo:
 logger = Logger('Retry.checker')
 
 
-def get_workflow_info() -> RepoInfo:
+def fetch_workflow_inputs() -> RepoInfo:
     json_data = json.load(open(os.environ['GITHUB_EVENT_PATH']))
     owner = json_data['repository']['owner']['login']
     repo = json_data['repository']['name']
@@ -31,7 +29,7 @@ def rerun_all_failed_jobs(run_id, api_url, inputs, token):
     headers = {
         'Authorization': f'Bearer {token}'
     }
-    action_path = ActionMaps.get_action_path('RERUN_ALL_FAILED_WORKFLOW_JOBS', run_id)
+    action_path = types.get_action_path('RERUN_ALL_FAILED_WORKFLOW_JOBS', run_id)
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
     logger.info('Posting Rerun All failed Workflow URL: {}'.format(url))
     try:
@@ -49,7 +47,7 @@ def setup(token, inputs, api_url, run_id):
     headers = {
         'Authorization': f'Bearer {token}'
     }
-    action_path = ActionMaps.get_action_path('EXTRACT_WORKFLOW_DATA', run_id)
+    action_path = types.get_action_path('EXTRACT_WORKFLOW_DATA', run_id)
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
     logger.info('Posting Workflow URL: {}'.format(url))
     try:

@@ -1,4 +1,4 @@
-class ActionMaps:
+class types:
     EXTRACT_WORKFLOW_DATA = "actions/runs/{id}/jobs"
     RERUN_WORKFLOW = "actions/jobs/{id}/rerun"
     RERUN_ALL_FAILED_WORKFLOW_JOBS = "actions/runs/{id}/rerun-failed-jobs"
