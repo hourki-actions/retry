@@ -37,5 +37,11 @@ def check_workflow_api(token, inputs, api_url, run_id):
         else:
             logger.info('get API logs with ID {}'.format(run_id))
             logger.info('logs {}'.format(response.data))
+            data = json.loads(response.data)
+            for step in data["jobs"][0]["steps"]:
+                step_name = step["name"]
+                step_status = step["status"]
+                step_conclusion = step["conclusion"]
+                logger.info('Job with name {} status {} conclusion {}'.format(step_name, step_status, step_conclusion))
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
