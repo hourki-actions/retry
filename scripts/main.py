@@ -8,7 +8,7 @@ from retry import *
 
 
 @dataclass
-class RepoInfo:
+class RepoInputs:
     owner: str
     repo: str
 
@@ -16,17 +16,17 @@ class RepoInfo:
 logger = Logger('Retry.check')
 
 
-def fetch_workflow_inputs() -> RepoInfo:
+def fetch_workflow_inputs() -> RepoInputs:
     json_data = json.load(open(os.environ['GITHUB_EVENT_PATH']))
     owner = json_data['repository']['owner']['login']
     repo = json_data['repository']['name']
-    return RepoInfo(owner=owner, repo=repo)
+    return RepoInputs(owner=owner, repo=repo)
 
 
-def setup(token, inputs, api_url, run_id):
+def setup(token, repoInputs, api_url, run_id):
     try:
         action_path = types.get_action_path('EXTRACT_WORKFLOW_DATA', run_id)
-        url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+        url = build_url(api_url=api_url, owner=repoInputs.owner, repo=repoInputs.repo, action_path=action_path)
         logger.info('Posting Workflow URL: {}'.format(url))
         response = build_request(token=token, url=url, method="GET")
         if response.status != 200:
@@ -41,7 +41,6 @@ def setup(token, inputs, api_url, run_id):
             for job in jobs:
                 extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
             if failed_jobs >= 1:
-                rerun_all_failed_jobs(run_id, api_url, inputs, token)
-
+                rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
