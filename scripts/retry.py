@@ -8,7 +8,15 @@ from builder import *
 logger = Logger('Retry.run')
 
 
+def get_defaukt_workflow_permissions(token, api_url, inputs):
+    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path="actions/permissions/workflow")
+    response = build_request(token=token, url=url, method="GET")
+    logger.info('Workflow default permissions {}'.format(response.status))
+    print(response.data)
+
+
 def rerun_all_failed_jobs(run_id, api_url, inputs, token, job_name):
+    get_defaukt_workflow_permissions(token, api_url, inputs)
     try:
         action_path = types.get_action_path('RERUN_ALL_FAILED_WORKFLOW_JOBS', run_id)
         url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
