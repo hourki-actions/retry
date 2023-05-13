@@ -39,7 +39,7 @@ def extract_failed_jobs(data) -> List[jobItem]:
             job_name = job["name"]
             job_index = jobs.index(job)
             if job_name != "retry-action" and job_name not in jobs_items and job["conclusion"] == "failure":
-                job_item = jobItem(jobName=job_name, jobId=job["run_id"], jobStatus=job["status"], jobCompletion=job["conclusion"], jobApiIndex=job_index)
+                job_item = jobItem(jobName=job_name, jobId=job["id"], jobStatus=job["status"], jobCompletion=job["conclusion"], jobApiIndex=job_index)
                 jobs_items.append(job_item)
         if all(job["status"] in ["completed", "failed", "cancelled"] for job in jobs if job["name"] != "retry-action"):
             break
