@@ -7,7 +7,7 @@ def build_url(api_url, owner, repo, action_path) -> str:
 
 def build_request(token, url, method, body=None):
     headers = {
-        'Authorization': f'Bearer {token}'
+        'Authorization': 'Bearer {}'.format(token)
     }
     if body is None:
       return urllib3.request(method, url, headers=headers)
