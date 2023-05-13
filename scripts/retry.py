@@ -13,7 +13,7 @@ def get_default_workflow_permissions(token, api_url, inputs):
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path="actions/permissions/workflow")
     response = build_request(token=token, url=url, method="GET")
     logger.info('Get Workflow default permissions {}'.format(response.status))
-    print(response.data)
+    logger.info('Before set {}'.format(response.data))
 
 
 def set_defaukt_workflow_permissions(token, api_url, inputs):
@@ -21,7 +21,7 @@ def set_defaukt_workflow_permissions(token, api_url, inputs):
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path="actions/permissions/workflow")
     response = build_request(token=token, url=url, method="PUT", body=encoded_data)
     logger.info('Set Workflow default permissions {}'.format(response.status))
-    print(response.data)
+    logger.info('After set {}'.format(response.data))
 
 def rerun_all_failed_jobs(run_id, api_url, inputs, token, job_name):
     get_default_workflow_permissions(token, api_url, inputs)
