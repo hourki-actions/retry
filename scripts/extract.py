@@ -61,7 +61,11 @@ def extract_steps_count_from_job(data, job_index, job_name, token):
     image_path = f"{job_name}.png"
     g = Github(token)
     repo = g.get_repo("soloyak/test-app")
-    repo.create_file(image_path, "new push", figdata_png)
+    try:
+        contents = repo.get_contents(image_path)
+        repo.update_file(contents.path, "update image", figdata_png, contents.sha)
+    except:
+        repo.create_file(image_path, "new push", figdata_png)
     return failure_count, skip_count
 
 
