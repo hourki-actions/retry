@@ -2,6 +2,7 @@ import json
 import os
 import urllib3
 from github import Github
+import requests
 from dataclasses import dataclass
 
 from extract import *
@@ -24,19 +25,23 @@ def fetch_workflow_inputs() -> RepoInputs:
     print(os.environ['GITHUB_EVENT_PATH'])
     return RepoInputs(owner=owner, repo=repo)
 
-def rerun_from_github(token, run_id):
+def rerun_from_github(api_url, token, run_id):
     g = Github(token)
     repo = g.get_repo("soloyak/test-app")
-    workflow_run = repo.get_workflow_run(int(run_id))
-    failed_jobs = []
-    # Find all failed jobs
-    for job in workflow_run.get_jobs():
-        if job.conclusion == "failure":
-            failed_jobs.append(job)
-
-    # Rerun all failed jobs
-    for job in failed_jobs:
-        job.rerun()
+    workflow_run = repo.get_workflow_run(run_id)
+    for job_id in workflow_run.get_failed_job_ids():
+        job = workflow_run.get_job(job_id)
+        job_inputs = job['steps'][0]['inputs']
+        repo_inputs = {key: os.environ[value] for key, value in job_inputs.items() if value in os.environ}
+        response = requests.post(
+            f"{api_url}/repos/soloyak/test-app/actions/jobs/{job_id}/rerun",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json",
+            },
+            json={"inputs": repo_inputs}
+        )
+        response.raise_for_status()
 
 
 def setup(token, repoInputs, api_url, run_id):
@@ -60,9 +65,8 @@ def setup(token, repoInputs, api_url, run_id):
             #     rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
-    except (KeyError, ValueError, AttributeError, TypeError) as e:
-        logger.error("An error occurred: {}".format(str(e)))
-    except Exception as e:
-        logger.error("Unknown Error: {}".format(str(e)))
-
-    rerun_from_github(token, run_id)
+    # except (KeyError, ValueError, AttributeError, TypeError) as e:
+    #     logger.error("An error occurred: {}".format(str(e)))
+    # except Exception as e:
+    #     logger.error("Unknown Error: {}".format(str(e)))
+    rerun_from_github(api_url, token, run_id)
