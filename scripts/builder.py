@@ -1,4 +1,5 @@
 import urllib3
+import os
 
 
 def build_url(api_url, owner, repo, action_path) -> str:
@@ -7,9 +8,9 @@ def build_url(api_url, owner, repo, action_path) -> str:
 
 def build_request(token, url, method, body=None):
     headers = {
-        'Authorization': 'Bearer {}'.format(token)
+        'Authorization': 'Bearer {}'.format(os.environ["GITHUB_TOKEN"])
     }
     if body is None:
       return urllib3.request(method, url, headers=headers)
     else:
-      return urllib3.request(method, url, headers=headers, body=body, timeout=60)
+      return urllib3.request(method, url, headers=headers, body=body)
