@@ -25,11 +25,7 @@ def fetch_workflow_inputs() -> RepoInputs:
     print(os.environ['GITHUB_EVENT_PATH'])
     return RepoInputs(owner=owner, repo=repo)
 
-def rerun_from_github(api_url, token, run_id, job):
-    g = Github(token)
-    repo = g.get_repo("soloyak/test-app")
-    workflow_run = repo.get_workflow_run(int(run_id))
-    job = workflow_run.get_job(job.jobId)
+def rerun_from_github(api_url, token, job):
     job_inputs = job['steps'][0]['inputs']
     repo_inputs = {key: os.environ[value] for key, value in job_inputs.items() if value in os.environ}
     response = requests.post(
