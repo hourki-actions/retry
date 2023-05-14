@@ -28,7 +28,7 @@ def fetch_workflow_inputs() -> RepoInputs:
 def rerun_from_github(api_url, token, run_id):
     g = Github(token)
     repo = g.get_repo("soloyak/test-app")
-    workflow_run = repo.get_workflow_run(run_id)
+    workflow_run = repo.get_workflow_run(int(run_id))
     for job_id in workflow_run.get_failed_job_ids():
         job = workflow_run.get_job(job_id)
         job_inputs = job['steps'][0]['inputs']
