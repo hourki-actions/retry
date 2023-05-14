@@ -25,23 +25,22 @@ def fetch_workflow_inputs() -> RepoInputs:
     print(os.environ['GITHUB_EVENT_PATH'])
     return RepoInputs(owner=owner, repo=repo)
 
-def rerun_from_github(api_url, token, run_id):
+def rerun_from_github(api_url, token, run_id, job):
     g = Github(token)
     repo = g.get_repo("soloyak/test-app")
     workflow_run = repo.get_workflow_run(int(run_id))
-    for job_id in workflow_run.get_failed_job_ids():
-        job = workflow_run.get_job(job_id)
-        job_inputs = job['steps'][0]['inputs']
-        repo_inputs = {key: os.environ[value] for key, value in job_inputs.items() if value in os.environ}
-        response = requests.post(
-            f"{api_url}/repos/soloyak/test-app/actions/jobs/{job_id}/rerun",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Accept": "application/vnd.github+json",
-            },
-            json={"inputs": repo_inputs}
-        )
-        response.raise_for_status()
+    job = workflow_run.get_job(job.jobId)
+    job_inputs = job['steps'][0]['inputs']
+    repo_inputs = {key: os.environ[value] for key, value in job_inputs.items() if value in os.environ}
+    response = requests.post(
+        f"{api_url}/repos/soloyak/test-app/actions/jobs/{job.jobId}/rerun",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+        },
+        json={"inputs": repo_inputs}
+    )
+    response.raise_for_status()
 
 
 def setup(token, repoInputs, api_url, run_id):
@@ -55,11 +54,12 @@ def setup(token, repoInputs, api_url, run_id):
             return
         else:
             logger.info('Fetch workflow inputs with ID {}'.format(run_id))
-            # data = json.loads(response.data)
-            # jobs = extract_failed_jobs(data)
+            data = json.loads(response.data)
+            jobs = extract_failed_jobs(data)
             # failed_jobs = len(jobs)
             # logger.info('{} failed job(s) was captured'.format(failed_jobs))
-            # for job in jobs:
+            for job in jobs:
+                rerun_from_github(api_url, token, run_id, job)
             #     extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
             # if failed_jobs >= 1:
             #     rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
@@ -69,4 +69,3 @@ def setup(token, repoInputs, api_url, run_id):
     #     logger.error("An error occurred: {}".format(str(e)))
     # except Exception as e:
     #     logger.error("Unknown Error: {}".format(str(e)))
-    rerun_from_github(api_url, token, run_id)
