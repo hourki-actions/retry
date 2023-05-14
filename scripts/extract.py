@@ -56,6 +56,7 @@ def extract_steps_count_from_job(data, job_index, job_name, token):
     plt.savefig(figfile, format='png')
     figfile.seek(0)
     figdata_png = base64.b64encode(figfile.getvalue())
+    print(figdata_png)
     image_data = bytes(figdata_png)
     plt.clf()
     plt.close()
