@@ -1,6 +1,2 @@
 requests
 orjson
-networkx
-matplotlib
-github
-PyGithub
