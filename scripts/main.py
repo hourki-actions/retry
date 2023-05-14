@@ -13,7 +13,7 @@ class RepoInputs:
     owner: str
     repo: str
 
-toolkit = Toolkit()
+
 logger = Logger('Retry.check')
 
 
