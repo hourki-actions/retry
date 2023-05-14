@@ -20,6 +20,7 @@ def fetch_workflow_inputs() -> RepoInputs:
     json_data = json.load(open(os.environ['GITHUB_EVENT_PATH']))
     owner = json_data['repository']['owner']['login']
     repo = json_data['repository']['name']
+    print(os.environ['GITHUB_EVENT_PATH'])
     return RepoInputs(owner=owner, repo=repo)
 
 
