@@ -25,5 +25,6 @@ def rerun_all_failed_jobs(run_id, api_url, inputs, token):
             return
         else:
             logger.error('Cannot re-run failed job(s) with status {}'.format(response.status))
+            logger.error('Logs for re-run failure {}'.format(response.data))
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
