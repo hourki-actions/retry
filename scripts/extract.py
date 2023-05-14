@@ -55,7 +55,8 @@ def extract_steps_count_from_job(data, job_index, job_name, token):
     figfile = io.BytesIO()
     plt.savefig(figfile, format='png')
     figfile.seek(0)
-    figdata_png = base64.b64encode(figfile.getvalue()).decode('utf-8')
+    figdata_png = base64.b64encode(figfile.getvalue())
+    image_data = bytes(figdata_png)
     plt.clf()
     plt.close()
     image_path = f"{job_name}.png"
@@ -63,9 +64,9 @@ def extract_steps_count_from_job(data, job_index, job_name, token):
     repo = g.get_repo("soloyak/test-app")
     try:
         contents = repo.get_contents(image_path)
-        repo.update_file(contents.path, "update image", figdata_png, contents.sha)
+        repo.update_file(contents.path, "update image", image_data, contents.sha)
     except:
-        repo.create_file(image_path, "new push", figdata_png)
+        repo.create_file(image_path, "new push", image_data)
     return failure_count, skip_count
 
 
