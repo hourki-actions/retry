@@ -12,8 +12,14 @@ inputs:
     description: 'The maximum number of retries for failed jobs within a workflow'
     default: 3
 outputs:
+  rerun:
+    description: approval if re-running should continu to next steps
   failed_jobs:
     description: number of failed jobs
+  run_id:
+    description: failed workflow run id
+  repo:
+    description: repository inputs
 
 runs:
   using: 'docker'

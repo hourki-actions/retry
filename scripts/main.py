@@ -44,7 +44,10 @@ def setup(token, repoInputs, api_url, run_id):
                 extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
             if failed_jobs >= 1:
                 #rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
+                core.set_output('rerun', 'continue')
                 core.set_output('failed_jobs', failed_jobs)
+                core.set_output('run_id', run_id)
+                core.set_output('repo', f"{repoInputs.owner}/{repoInputs.repo}")
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
     except (KeyError, ValueError, AttributeError, TypeError) as e:
