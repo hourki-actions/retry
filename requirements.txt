@@ -2,4 +2,4 @@ requests
 orjson
 github
 PyGithub
-github_workflow_toolkit
+actions-toolkit
