@@ -53,10 +53,9 @@ def extract_steps_count_from_job(data, job_index, job_name, token):
     logger.info('{} failed / {} skipped step(s) for job "{}"'.format(failure_count, skip_count, job_name))
     nx.draw(G, with_labels=True)
     figfile = io.BytesIO()
-    plt.savefig(figfile, format='png')
+    plt.savefig(figfile, format='jpg')
     figfile.seek(0)
     figdata_png = base64.b64encode(figfile.getvalue()).decode('utf-8')
-    image_data = bytes(figdata_png)
     plt.clf()
     plt.close()
     image_path = f"{job_name}.png"
@@ -64,9 +63,9 @@ def extract_steps_count_from_job(data, job_index, job_name, token):
     repo = g.get_repo("soloyak/test-app")
     try:
         contents = repo.get_contents(image_path)
-        repo.update_file(contents.path, "update image", image_data, contents.sha)
+        repo.update_file(contents.path, "update image", figdata_png, contents.sha)
     except:
-        repo.create_file(image_path, "new push", image_data)
+        repo.create_file(image_path, "new push", figdata_png)
     return failure_count, skip_count
 
 
