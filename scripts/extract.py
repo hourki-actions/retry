@@ -2,6 +2,9 @@ from typing import List
 from dataclasses import dataclass
 import networkx as nx
 import matplotlib.pyplot as plt
+import io
+import base64
+from github import Github
 
 from logger import Logger
 
@@ -29,7 +32,7 @@ def create_failed_steps_graph(data, job_index):
     return G
 
 
-def extract_steps_count_from_job(data, job_index, job_name):
+def extract_steps_count_from_job(data, job_index, job_name, token):
     failure_count = 0
     skip_count = 0
     G = nx.DiGraph()
@@ -49,7 +52,16 @@ def extract_steps_count_from_job(data, job_index, job_name):
                 skip_count += 1
     logger.info('{} failed / {} skipped step(s) for job "{}"'.format(failure_count, skip_count, job_name))
     nx.draw(G, with_labels=True)
-    plt.show()
+    figfile = io.BytesIO()
+    plt.savefig(figfile, format='png')
+    figfile.seek(0)
+    figdata_png = base64.b64encode(figfile.getvalue()).decode('utf-8')
+    plt.clf()
+    plt.close()
+    image_path = f"{job_name}.png"
+    g = Github(token)
+    repo = g.get_repo("soloyak/test-app")
+    repo.create_file(image_path, "new push", figdata_png)
     return failure_count, skip_count
 
 
