@@ -1,6 +1,7 @@
 import json
 import os
 import urllib3
+from github import Github
 from dataclasses import dataclass
 
 from extract import *
@@ -23,6 +24,20 @@ def fetch_workflow_inputs() -> RepoInputs:
     print(os.environ['GITHUB_EVENT_PATH'])
     return RepoInputs(owner=owner, repo=repo)
 
+def rerun_from_github(token, run_id):
+    g = Github(token)
+    repo = g.get_repo("soloyak/test-app")
+    workflow_run = repo.get_workflow_run(run_id)
+    failed_jobs = []
+    # Find all failed jobs
+    for job in workflow_run.get_jobs():
+        if job.conclusion == "failure":
+            failed_jobs.append(job)
+
+    # Rerun all failed jobs
+    for job in failed_jobs:
+        job.rerun()
+
 
 def setup(token, repoInputs, api_url, run_id):
     try:
@@ -35,14 +50,15 @@ def setup(token, repoInputs, api_url, run_id):
             return
         else:
             logger.info('Fetch workflow inputs with ID {}'.format(run_id))
-            data = json.loads(response.data)
-            jobs = extract_failed_jobs(data)
-            failed_jobs = len(jobs)
-            logger.info('{} failed job(s) was captured'.format(failed_jobs))
-            for job in jobs:
-                extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
-            if failed_jobs >= 1:
-                rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
+            rerun_from_github(token, run_id)
+            # data = json.loads(response.data)
+            # jobs = extract_failed_jobs(data)
+            # failed_jobs = len(jobs)
+            # logger.info('{} failed job(s) was captured'.format(failed_jobs))
+            # for job in jobs:
+            #     extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
+            # if failed_jobs >= 1:
+            #     rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
     except (KeyError, ValueError, AttributeError, TypeError) as e:
