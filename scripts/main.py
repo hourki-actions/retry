@@ -55,7 +55,7 @@ def setup(token, repoInputs, api_url, run_id):
             # failed_jobs = len(jobs)
             # logger.info('{} failed job(s) was captured'.format(failed_jobs))
             for job in jobs:
-                rerun_from_github(api_url, token, run_id, job)
+                rerun_from_github(api_url, token, job)
             #     extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
             # if failed_jobs >= 1:
             #     rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
