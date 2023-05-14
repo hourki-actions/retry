@@ -16,7 +16,7 @@ class jobItem:
 logger = Logger('Retry.extract')
 
 
-def extract_steps_count_from_job(data, job_index, job_name, token):
+def extract_steps_count_from_job(data, job_index, job_name):
     failure_count = 0
     skip_count = 0
     for step in data["jobs"][job_index]["steps"]:
