@@ -2,6 +2,7 @@ import json
 import os
 import urllib3
 from dataclasses import dataclass
+from github_workflow_toolkit import Toolkit
 
 from extract import *
 from retry import *
@@ -12,7 +13,7 @@ class RepoInputs:
     owner: str
     repo: str
 
-
+toolkit = Toolkit()
 logger = Logger('Retry.check')
 
 
@@ -42,7 +43,8 @@ def setup(token, repoInputs, api_url, run_id):
             for job in jobs:
                 extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
             if failed_jobs >= 1:
-                rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
+                #rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
+                toolkit.set_output('failed_jobs', failed_jobs)
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
     except (KeyError, ValueError, AttributeError, TypeError) as e:

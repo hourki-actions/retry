@@ -11,6 +11,9 @@ inputs:
   max_retries:
     description: 'The maximum number of retries for failed jobs within a workflow'
     default: 3
+outputs:
+  failed_jobs:
+    description: number of failed jobs
 
 runs:
   using: 'docker'
