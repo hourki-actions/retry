@@ -25,16 +25,13 @@ def fetch_workflow_inputs() -> RepoInputs:
     print(os.environ['GITHUB_EVENT_PATH'])
     return RepoInputs(owner=owner, repo=repo)
 
-def rerun_from_github(api_url, token, job):
-    job_inputs = job['steps'][0]['inputs']
-    repo_inputs = {key: os.environ[value] for key, value in job_inputs.items() if value in os.environ}
+def rerun_from_github(api_url, token, job_id):
     response = requests.post(
-        f"{api_url}/repos/soloyak/test-app/actions/jobs/{job.jobId}/rerun",
+        f"{api_url}/repos/soloyak/test-app/actions/jobs/{job_id}/rerun",
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
-        },
-        json={"inputs": repo_inputs}
+        }
     )
     response.raise_for_status()
 
@@ -55,7 +52,7 @@ def setup(token, repoInputs, api_url, run_id):
             # failed_jobs = len(jobs)
             # logger.info('{} failed job(s) was captured'.format(failed_jobs))
             for job in jobs:
-                rerun_from_github(api_url, token, job)
+                rerun_from_github(api_url, token, job.jobId)
             #     extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
             # if failed_jobs >= 1:
             #     rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
