@@ -12,4 +12,4 @@ def build_request(token, url, method, body=None):
     if body is None:
       return urllib3.request(method, url, headers=headers)
     else:
-      return urllib3.request(method, url, headers=headers, body=body)
+      return urllib3.request(method, url, headers=headers, body=body, timeout=60)
