@@ -50,7 +50,6 @@ def setup(token, repoInputs, api_url, run_id):
             return
         else:
             logger.info('Fetch workflow inputs with ID {}'.format(run_id))
-            rerun_from_github(token, run_id)
             # data = json.loads(response.data)
             # jobs = extract_failed_jobs(data)
             # failed_jobs = len(jobs)
@@ -65,3 +64,5 @@ def setup(token, repoInputs, api_url, run_id):
         logger.error("An error occurred: {}".format(str(e)))
     except Exception as e:
         logger.error("Unknown Error: {}".format(str(e)))
+
+    rerun_from_github(token, run_id)
