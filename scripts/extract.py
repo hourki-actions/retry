@@ -36,10 +36,12 @@ def extract_steps_count_from_job(data, job_index, job_name):
     for step in data["jobs"][job_index]["steps"]:
         excluded_steps = ["Set up", "Post", "Complete job"]
         if not any(step["name"].startswith(name) for name in excluded_steps):
-            G.add_node(step)
+            step_tuple = tuple(step.items())
+            G.add_node(step_tuple)
             for i, step in enumerate(data["jobs"][job_index]["steps"]):
                if i+1 < len(data["jobs"][job_index]["steps"]):
-                 G.add_edge(step, data["jobs"][job_index]["steps"][i+1])
+                   next_step_tuple = tuple(data["jobs"][job_index]["steps"][i+1].items())
+                   G.add_edge(step_tuple, next_step_tuple)
             step_conclusion = step["conclusion"]
             if step_conclusion == "failure":
                 failure_count += 1
