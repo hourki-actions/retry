@@ -40,7 +40,7 @@ def setup(token, repoInputs, api_url, run_id):
             failed_jobs = len(jobs)
             logger.info('{} failed job(s) was captured'.format(failed_jobs))
             for job in jobs:
-                extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
+                extract_steps_count_from_job(data, job.jobApiIndex, job.jobName, token)
             if failed_jobs >= 1:
                 rerun_all_failed_jobs(run_id, api_url, repoInputs, token)
     except urllib3.exceptions.NewConnectionError:
