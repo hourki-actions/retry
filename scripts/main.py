@@ -18,10 +18,14 @@ logger = Logger('Retry.check')
 
 
 def retry_from_dispatched_event(token, run_id, failed_jobs_ids, max_retries):
-    failed_jobs_ids_list = failed_jobs_ids.split(":")
     logger.info("received workflow id {}".format(run_id))
-    for job_id in failed_jobs_ids_list:
-        logger.info("extracted failed jobs id {}".format(job_id))
+    if ":" in failed_jobs_ids:
+        joined_ids = failed_jobs_ids .split(":")
+        for id in joined_ids:
+            logger.info("extracted failed jobs id {}".format(id))
+    else:
+        logger.info("extracted failed jobs id {}".format(failed_jobs_ids))
+
 
 
 def fetch_workflow_inputs() -> RepoInputs:
