@@ -19,7 +19,7 @@ logger = Logger('Retry.check')
 
 def retry_from_dispatched_event(token, run_id, failed_jobs_ids, max_retries):
     logger.info("received workflow id {}".format(run_id))
-    logger.info("received failed jobs ids id {}".format(failed_jobs_ids))
+    logger.info("received failed jobs ids {}".format(failed_jobs_ids))
 
 
 
