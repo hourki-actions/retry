@@ -17,7 +17,7 @@ def send_repo_dispatch_event(run_id, api_url, inputs, token, jobs_ids):
             "event_type": "retry-event",
             "client_payload": {
                 "workflow_id": f"{run_id}",
-                "failed_job_ids": f"{jobs_ids}",
+                "failed_jobs_ids": f"{jobs_ids}",
                 "max_retries": "3",
                 "from_dispatch": "true"
             }
