@@ -41,15 +41,17 @@ def retry_from_dispatched_event(token, failed_jobs_ids, api_url, inputs):
         joined_ids = failed_jobs_ids.split(":")
         for id in joined_ids:
             while True:
+                time.sleep(10)
                 status = check_job_status(id, inputs, token, api_url)
                 if status == "completed":
+                    check_job_status(id, inputs, token, api_url)
+                    action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
+                    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+                    response = build_request(token=token, url=url, method="POST")
+                    logger.info(response.status)
                     break
-                time.sleep(10)
-            check_job_status(id, inputs, token, api_url)
-            action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
-            url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
-            response = build_request(token=token, url=url, method="POST")
-            logger.info(response.status)
+                else:
+                    logger.info("Job {} is not yet completed. Waiting...".format(id))
     else:
         logger.info("extracted one single job with id {}".format(failed_jobs_ids))
 
