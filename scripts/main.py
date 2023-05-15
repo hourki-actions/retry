@@ -26,13 +26,7 @@ def check_job_status(job_id, inputs, token, api_url, run_id):
         data = json.loads(response.data)
         status = data["status"]
         conclusion = data["conclusion"]
-        if status == "completed" and conclusion == "failure":
-            if data["run_id"] != run_id:
-                logger.info("Job {} is from a previous attempt, skipping...".format(data["name"]))
-                return status
-        else:
-            logger.info("Job {} status: {}. Waiting...".format(job_id, status))
-            return status
+        return status, conclusion
     else:
         logger.error("Error fetching job status: {}".format(response.status))
 
@@ -40,20 +34,30 @@ def check_job_status(job_id, inputs, token, api_url, run_id):
 def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs):
     if ":" in failed_jobs_ids:
         joined_ids = failed_jobs_ids.split(":")
-        for id in joined_ids:
-            while True:
+        for job_id in joined_ids:
+            retry_count = 0
+            max_retries = 3
+            while retry_count < max_retries:
                 time.sleep(10)
-                status = check_job_status(id, inputs, token, api_url, run_id)
-                if status == "completed":
-                    action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
+                status, conclusion = check_job_status(job_id, inputs, token, api_url, run_id)
+                if status == "completed" and conclusion == "failure":
+                    action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', job_id)
                     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
                     response = build_request(token=token, url=url, method="POST")
-                    logger.info(response.status)
+                    if response.status == 204:
+                        logger.info("retry {}".format(retry_count))
+                        logger.info("Job is rerunned with success".format(job_id))
+                        break
+                elif status == "completed" and conclusion == "success":
+                    logger.info("Job {} has been completed with {}".format(job_id, conclusion))
                     break
                 else:
-                    logger.info("Job {} is not yet completed. Waiting...".format(id))
+                    logger.info("retry {} for job {}".format(retry_count, job_id))
+                    retry_count += 1
+            else:
+                logger.error("Maximum retries '{}' reached for job {}".format(max_retries, job_id))
     else:
-        logger.info("extracted one single job with id {}".format(failed_jobs_ids))
+        logger.info("TBD")
 
 
 def fetch_workflow_inputs() -> RepoInputs:
