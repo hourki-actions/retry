@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import urllib3
 from dataclasses import dataclass
 
@@ -20,30 +21,30 @@ logger = Logger('Retry.check')
 def check_job_status(job_id, inputs, token, api_url):
     action_path = types.get_action_path('FETCH_JOB_STATUS', job_id)
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
-    response = build_request(token=token, url=url, method="GET")
-    if response.status == 200:
-        data = json.loads(response.data)
-        status = data["status"]
-        if status == "completed":
-            return "true"
+    while True:
+        response = build_request(token=token, url=url, method="GET")
+        if response.status == 200:
+            data = json.loads(response.data)
+            status = data["status"]
+            if status == "completed":
+                logger.info("Job {} completed".format(job_id))
+                return
+            else:
+                logger.info("Job {} status: {}. Waiting...".format(job_id, status))
         else:
-            logger.info("status : {} for job {}".format(status, job_id))
-            return "false"
+            logger.error("Error fetching job status: {}".format(response.status))
+        time.sleep(10)
 
 
-def retry_from_dispatched_event(token, run_id, failed_jobs_ids, api_url, inputs):
+def retry_from_dispatched_event(token, failed_jobs_ids, api_url, inputs):
     if ":" in failed_jobs_ids:
         joined_ids = failed_jobs_ids.split(":")
         for id in joined_ids:
-            if check_job_status(id, inputs, token, api_url) == "true":
-                logger.info("extracted failed jobs id {}".format(id))
-                action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
-                url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
-                response = build_request(token=token, url=url, method="POST")
-                logger.info(response.status)
-                logger.info(response.data)
-            else:
-                logger.info("cannot rerun job with id {}".format(id))
+            check_job_status(id, inputs, token, api_url)
+            action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
+            url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+            response = build_request(token=token, url=url, method="POST")
+            logger.info(response.status)
     else:
         logger.info("extracted one single job with id {}".format(failed_jobs_ids))
 
