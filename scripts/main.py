@@ -17,16 +17,34 @@ class RepoInputs:
 logger = Logger('Retry.check')
 
 
+def check_job_status(job_id, inputs, token, api_url):
+    action_path = types.get_action_path('FETCH_JOB_STATUS', job_id)
+    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+    response = build_request(token=token, url=url, method="GET")
+    if response.status == 200:
+        data = json.loads(response.data)
+        status = data["status"]
+        if status == "completed":
+            return "true"
+        else:
+            logger.info("status : {} for job {}".format(status, job_id))
+            return "false"
+
+
+
 def retry_from_dispatched_event(token, run_id, failed_jobs_ids, api_url, inputs):
     logger.info("received workflow id {}".format(run_id))
     if ":" in failed_jobs_ids:
         joined_ids = failed_jobs_ids .split(":")
         for id in joined_ids:
-            logger.info("extracted failed jobs id {}".format(id))
-            action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
-            url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
-            response = build_request(token=token, url=url, method="POST")
-            logger.info(response.status)
+            if check_job_status(id, inputs, token, api_url) == "true":
+                logger.info("extracted failed jobs id {}".format(id))
+                action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
+                url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+                response = build_request(token=token, url=url, method="POST")
+                logger.info(response.status)
+            else:
+                logger.info("cannot rerun job with id {}".format(id))
     else:
         logger.info("extracted failed jobs id {}".format(failed_jobs_ids))
 
