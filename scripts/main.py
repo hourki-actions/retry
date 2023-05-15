@@ -51,6 +51,12 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
                 elif status == "completed" and conclusion == "success":
                     logger.info("Job {} has been completed with {}".format(job_id, conclusion))
                     break
+                elif status != "in_progress" and status != "queued":
+                    logger.error("Job {} has an unexpected status: {}".format(job_id, status))
+                    break
+                else:
+                    logger.info("retry {} for job {}".format(retry_count, job_id))
+                    retry_count += 1
             else:
                 logger.error("Maximum retries '{}' reached for job {}".format(max_retries, job_id))
     else:
