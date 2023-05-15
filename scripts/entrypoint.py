@@ -13,4 +13,4 @@ if __name__ == "__main__":
     else:
         failed_jobs_ids = os.environ["INPUT_FAILED_JOBS_IDS"]
         print(os.environ["INPUT_FAILED_JOBS_IDS"])
-        retry_from_dispatched_event(repo_token, runId, failed_jobs_ids, max_retries)
+        retry_from_dispatched_event(repo_token, runId, failed_jobs_ids, api_url, repoInputs)

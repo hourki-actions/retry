@@ -17,12 +17,16 @@ class RepoInputs:
 logger = Logger('Retry.check')
 
 
-def retry_from_dispatched_event(token, run_id, failed_jobs_ids, max_retries):
+def retry_from_dispatched_event(token, run_id, failed_jobs_ids, api_url, inputs):
     logger.info("received workflow id {}".format(run_id))
     if ":" in failed_jobs_ids:
         joined_ids = failed_jobs_ids .split(":")
         for id in joined_ids:
             logger.info("extracted failed jobs id {}".format(id))
+            action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
+            url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+            response = build_request(token=token, url=url, method="POST")
+            logger.info(response.status)
     else:
         logger.info("extracted failed jobs id {}".format(failed_jobs_ids))
 
