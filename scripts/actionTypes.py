@@ -1,6 +1,7 @@
 class types:
     EXTRACT_WORKFLOW_DATA = "actions/runs/{id}/jobs"
-    RERUN_WORKFLOW = "actions/jobs/{id}/rerun"
+    RERUN_SINGLE_FAILED_JOB = "actions/jobs/{id}/rerun"
+    DISPATCH_EVENT = "dispatches"
     RERUN_ALL_FAILED_WORKFLOW_JOBS = "actions/runs/{id}/rerun-failed-jobs"
     @classmethod
     def get_action_path(cls, type, id):

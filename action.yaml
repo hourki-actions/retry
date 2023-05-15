@@ -11,6 +11,12 @@ inputs:
   max_retries:
     description: 'The maximum number of retries for failed jobs within a workflow'
     default: 3
+  from_dispatch:
+    default: false
+    description: a dispatch boolean to distingush code implementation
+  failed_jobs_ids:
+    default: ["1","2","3"]
+    description: failed jobs ids for retry action
 outputs:
   rerun:
     description: approval if re-running should continu to next steps
