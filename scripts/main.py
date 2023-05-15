@@ -31,11 +31,9 @@ def check_job_status(job_id, inputs, token, api_url):
             return "false"
 
 
-
 def retry_from_dispatched_event(token, run_id, failed_jobs_ids, api_url, inputs):
-    logger.info("received workflow id {}".format(run_id))
     if ":" in failed_jobs_ids:
-        joined_ids = failed_jobs_ids .split(":")
+        joined_ids = failed_jobs_ids.split(":")
         for id in joined_ids:
             if check_job_status(id, inputs, token, api_url) == "true":
                 logger.info("extracted failed jobs id {}".format(id))
@@ -43,11 +41,11 @@ def retry_from_dispatched_event(token, run_id, failed_jobs_ids, api_url, inputs)
                 url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
                 response = build_request(token=token, url=url, method="POST")
                 logger.info(response.status)
+                logger.info(response.data)
             else:
                 logger.info("cannot rerun job with id {}".format(id))
     else:
-        logger.info("extracted failed jobs id {}".format(failed_jobs_ids))
-
+        logger.info("extracted one single job with id {}".format(failed_jobs_ids))
 
 
 def fetch_workflow_inputs() -> RepoInputs:
