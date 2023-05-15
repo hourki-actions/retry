@@ -9,7 +9,7 @@ def build_request(token, url, method, payload=None):
     headers = {
         'Authorization': 'Bearer {}'.format(token)
     }
-    if body is None:
+    if payload is None:
       return urllib3.request(method, url, headers=headers)
     else:
       return urllib3.request(method, url, headers=headers, body=payload)
