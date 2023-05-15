@@ -1,4 +1,5 @@
 import urllib3
+import json
 
 
 from logger import Logger
@@ -21,6 +22,7 @@ def send_repo_dispatch_event(run_id, api_url, inputs, token, failed_jobs_ids):
                 "from_dispatch": "true"
             }
         }
+        print(json.dumps(payload))
         response = build_request(token=token, url=url, method="POST", payload=payload)
         if response.status == 204:
             logger.info('Workflow Dispatch was triggered with {}'.format(response.status))
