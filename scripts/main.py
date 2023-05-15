@@ -26,7 +26,8 @@ def check_job_status(job_id, inputs, token, api_url):
         if response.status == 200:
             data = json.loads(response.data)
             status = data["status"]
-            if status == "completed":
+            conclusion = data["conclusion"]
+            if status == "completed" and conclusion == "failure":
                 logger.info("Job {} completed".format(job_id))
                 return
             else:
