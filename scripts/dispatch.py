@@ -25,5 +25,6 @@ def send_repo_dispatch_event(run_id, api_url, inputs, token, failed_jobs_ids):
             logger.info('Workflow Dispatch was triggered with {}'.format(response.status))
         else:
             logger.error('Cannot trigger dispatch workflow failed job(s) with status {}'.format(response.status))
+            logger.error(response.data)
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
