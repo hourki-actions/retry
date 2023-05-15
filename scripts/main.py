@@ -18,7 +18,7 @@ class RepoInputs:
 logger = Logger('Retry.check')
 
 
-def check_job_status(job_id, inputs, token, api_url, run_id):
+def check_job_status(job_id, inputs, token, api_url):
     action_path = types.get_action_path('FETCH_JOB_STATUS', job_id)
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
     response = build_request(token=token, url=url, method="GET")
@@ -39,21 +39,18 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
             max_retries = 3
             while retry_count < max_retries:
                 time.sleep(10)
-                status, conclusion = check_job_status(job_id, inputs, token, api_url, run_id)
+                status, conclusion = check_job_status(job_id, inputs, token, api_url)
                 if status == "completed" and conclusion == "failure":
                     action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', job_id)
                     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
                     response = build_request(token=token, url=url, method="POST")
                     if response.status == 204:
-                        logger.info("retry {}".format(retry_count))
-                        logger.info("Job is rerunned with success".format(job_id))
-                        break
+                        logger.info("retry count {}".format(retry_count))
+                        logger.info("Job {} is re-run with success".format(job_id))
+                        retry_count += 1
                 elif status == "completed" and conclusion == "success":
                     logger.info("Job {} has been completed with {}".format(job_id, conclusion))
                     break
-                else:
-                    logger.info("retry {} for job {}".format(retry_count, job_id))
-                    retry_count += 1
             else:
                 logger.error("Maximum retries '{}' reached for job {}".format(max_retries, job_id))
     else:
