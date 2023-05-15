@@ -52,8 +52,11 @@ def setup(token, inputs, api_url, run_id):
                 for job in failed_jobs_list:
                     extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
                     failed_jobs_ids.append(str(job.jobId))
-                    join_ids = ":".join(failed_jobs_ids)
-                    send_repo_dispatch_event(run_id, api_url, inputs, token, join_ids)
+            if failed_jobs_count == 1:
+                send_repo_dispatch_event(run_id, api_url, inputs, token, str(failed_jobs_list[0]))
+            else:
+                send_repo_dispatch_event(run_id, api_url, inputs, token, failed_jobs_list)
+
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
     # except (KeyError, ValueError, AttributeError, TypeError) as e:
