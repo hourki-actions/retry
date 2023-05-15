@@ -45,7 +45,6 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
                 time.sleep(10)
                 status = check_job_status(id, inputs, token, api_url, run_id)
                 if status == "completed":
-                    check_job_status(id, inputs, token, api_url)
                     action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
                     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
                     response = build_request(token=token, url=url, method="POST")
