@@ -24,7 +24,6 @@ def retry_from_dispatched_event(token, run_id, failed_jobs_ids, max_retries):
         logger.info("extracted failed jobs id {}".format(job_id))
 
 
-
 def fetch_workflow_inputs() -> RepoInputs:
     json_data = json.load(open(os.environ['GITHUB_EVENT_PATH']))
     owner = json_data['repository']['owner']['login']
@@ -52,10 +51,10 @@ def setup(token, inputs, api_url, run_id):
                 for job in failed_jobs_list:
                     extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
                     failed_jobs_ids.append(str(job.jobId))
-            if failed_jobs_count == 1:
-                send_repo_dispatch_event(run_id, api_url, inputs, token, str(failed_jobs_list[0]))
-            else:
-                send_repo_dispatch_event(run_id, api_url, inputs, token, failed_jobs_list)
+                if failed_jobs_count == 1:
+                    send_repo_dispatch_event(run_id, api_url, inputs, token, failed_jobs_list[0])
+                else:
+                    send_repo_dispatch_event(run_id, api_url, inputs, token, failed_jobs_list)
 
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
