@@ -10,7 +10,6 @@ logger = Logger('Retry.dispatch')
 
 def send_repo_dispatch_event(run_id, api_url, inputs, token, jobs_ids):
     try:
-        logger.info("final output for jobs ids".format(failed_jobs_ids))
         url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path="dispatches")
         logger.info('Posting Workflow URL: {}'.format(url))
         logger.info('Failed ids {}'.format(jobs_ids))
