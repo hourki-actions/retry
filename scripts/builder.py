@@ -10,6 +10,6 @@ def build_request(token, url, method, payload=None):
         'Authorization': 'Bearer {}'.format(token)
     }
     if payload is None:
-      return urllib3.request(method, url, headers=headers)
+        return urllib3.request(method, url, headers=headers)
     else:
-      return urllib3.request(method, url, headers=headers, body=payload)
+        return urllib3.request(method, url, headers=headers, body=payload)
