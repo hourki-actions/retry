@@ -52,7 +52,7 @@ def setup(token, inputs, api_url, run_id):
                 send_repo_dispatch_event(token, run_id, api_url, inputs, failed_jobs_ids)
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
-    except (KeyError, ValueError, AttributeError, TypeError) as e:
-        logger.error("An error occurred: {}".format(str(e)))
-    except Exception as e:
-        logger.error("Unknown Error: {}".format(str(e)))
+    # except (KeyError, ValueError, AttributeError, TypeError) as e:
+    #     logger.error("An error occurred: {}".format(str(e)))
+    # except Exception as e:
+    #     logger.error("Unknown Error: {}".format(str(e)))
