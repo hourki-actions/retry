@@ -15,7 +15,7 @@ inputs:
     default: "false"
     description: a dispatch boolean to distingush code implementation
   failed_jobs_ids:
-    default: '["1","2","3"]'
+    default: "none"
     description: failed jobs ids for retry action
 outputs:
   rerun:
