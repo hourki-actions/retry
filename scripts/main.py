@@ -18,8 +18,10 @@ logger = Logger('Retry.check')
 
 
 def retry_from_dispatched_event(token, run_id, failed_jobs_ids, max_retries):
+    failed_jobs_ids_list = failed_jobs_ids.split(":")
     logger.info("received workflow id {}".format(run_id))
-    logger.info("received failed jobs ids {}".format(failed_jobs_ids))
+    for job_id in failed_jobs_ids_list:
+        logger.info("extracted failed jobs id {}".format(job_id))
 
 
 
@@ -49,8 +51,9 @@ def setup(token, inputs, api_url, run_id):
             if failed_jobs_count >= 1:
                 for job in failed_jobs_list:
                     extract_steps_count_from_job(data, job.jobApiIndex, job.jobName)
-                    failed_jobs_ids.append(job.jobId)
-                    send_repo_dispatch_event(run_id, api_url, inputs, token, failed_jobs_ids)
+                    failed_jobs_ids.append(str(job.jobId))
+                    join_ids = ":".join(failed_jobs_ids)
+                    send_repo_dispatch_event(run_id, api_url, inputs, token, join_ids)
     except urllib3.exceptions.NewConnectionError:
         logger.error("Connection failed.")
     # except (KeyError, ValueError, AttributeError, TypeError) as e:
