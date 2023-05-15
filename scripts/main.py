@@ -21,26 +21,30 @@ logger = Logger('Retry.check')
 def check_job_status(job_id, inputs, token, api_url):
     action_path = types.get_action_path('FETCH_JOB_STATUS', job_id)
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
-    while True:
-        response = build_request(token=token, url=url, method="GET")
-        if response.status == 200:
-            data = json.loads(response.data)
-            status = data["status"]
-            conclusion = data["conclusion"]
-            if status == "completed" and conclusion == "failure":
-                logger.info("Job {} completed".format(job_id))
-                return
-            else:
-                logger.info("Job {} status: {}. Waiting...".format(job_id, status))
+    response = build_request(token=token, url=url, method="GET")
+    if response.status == 200:
+        data = json.loads(response.data)
+        status = data["status"]
+        conclusion = data["conclusion"]
+        if status == "completed" and conclusion == "failure":
+            logger.info("Job {} completed".format(job_id))
+            return status
         else:
-            logger.error("Error fetching job status: {}".format(response.status))
-        time.sleep(10)
+            logger.info("Job {} status: {}. Waiting...".format(job_id, status))
+            return status
+    else:
+        logger.error("Error fetching job status: {}".format(response.status))
 
 
 def retry_from_dispatched_event(token, failed_jobs_ids, api_url, inputs):
     if ":" in failed_jobs_ids:
         joined_ids = failed_jobs_ids.split(":")
         for id in joined_ids:
+            while True:
+                status = check_job_status(id, inputs, token, api_url)
+                if status == "completed":
+                    break
+                time.sleep(10)
             check_job_status(id, inputs, token, api_url)
             action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', id)
             url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
