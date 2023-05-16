@@ -32,43 +32,46 @@ def check_job_status(job_id, inputs, token, api_url):
         logger.error("Error fetching job status: {}".format(response.status))
 
 
+def retry_main(job_id, inputs, token, api_url):
+    retry_count = 0
+    while retry_count < 3:
+        time.sleep(5)
+        status, conclusion, job_name, used_run_id_by_job_id = check_job_status(job_id, inputs, token, api_url)
+        logger.info("This the used run_id {} by job {}".format(used_run_id_by_job_id, job_name))
+        if status == "completed" and conclusion == "failure":
+            action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', job_id)
+            url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
+            response = build_request(token=token, url=url, method="POST")
+            if response.status == 204:
+                logger.info("retry count {} for job {}".format(retry_count, job_name))
+                logger.info("Job {} re-run made with success".format(job_name))
+            elif response.status == 403:
+                logger.info("Job {} re-run has an issue with status {}".format(job_name, response.status))
+                logger.info("log data {}".format(response.data))
+                retry_count += 1
+        elif status == "completed" and conclusion == "success":
+            logger.info("Job {} has been completed with {}".format(job_name, conclusion))
+            break
+        elif status == "in_progress":
+            logger.info("Job {} is in progress".format(job_name))
+            retry_count += 1
+        elif status == "current_attempt" and conclusion == "failure":
+            logger.error("cannot execute Job {} rerun from the current attempt".format(job_name))
+            retry_count += 1
+        else:
+            logger.info("retry {} for job {}".format(retry_count, job_name))
+            retry_count += 1
+    else:
+        logger.info("Maximum retries '{}' has been reached for job {}".format(retry_count, job_name))
+
+
 def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs):
     if ":" in failed_jobs_ids:
         joined_ids = failed_jobs_ids.split(":")
         for job_id in joined_ids:
-            retry_count = 0
-            while retry_count < 3:
-                time.sleep(5)
-                status, conclusion, job_name, used_run_id_by_job_id = check_job_status(job_id, inputs, token, api_url)
-                logger.info("This the global run id {}".format(run_id))
-                logger.info("This the used run_id {} by job {}".format(used_run_id_by_job_id, job_name))
-                if status == "completed" and conclusion == "failure":
-                    action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', job_id)
-                    url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
-                    response = build_request(token=token, url=url, method="POST")
-                    if response.status == 204:
-                        logger.info("retry count {} for job {}".format(retry_count, job_name))
-                        logger.info("Job {} re-run made with success".format(job_name))
-                    elif response.status == 403:
-                        logger.info("Job {} re-run has an issue with status {}".format(job_name, response.status))
-                        logger.info("log data {}".format(response.data))
-                        retry_count += 1
-                elif status == "completed" and conclusion == "success":
-                    logger.info("Job {} has been completed with {}".format(job_name, conclusion))
-                    break
-                elif status == "in_progress":
-                    logger.info("Job {} is in progress".format(job_name))
-                    retry_count += 1
-                elif status == "current_attempt" and conclusion == "failure":
-                    logger.error("cannot execute Job {} rerun from the current attempt".format(job_name))
-                    retry_count += 1
-                else:
-                    logger.info("retry {} for job {}".format(retry_count, job_name))
-                    retry_count += 1
-            else:
-                logger.info("Maximum retries '{}' has been reached for job {}".format(retry_count, job_name))
+            retry_main(job_id, inputs, token, api_url)
     else:
-        logger.info("TBD")
+        retry_main(failed_jobs_ids, inputs, token, api_url)
 
 
 def fetch_workflow_inputs() -> RepoInputs:
