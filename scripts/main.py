@@ -18,7 +18,7 @@ class RepoInputs:
 logger = Logger('Retry.check')
 
 
-def check_job_status(job_id, inputs, token, api_url, run_id):
+def check_job_status(job_id, inputs, token, api_url):
     action_path = types.get_action_path('FETCH_JOB_STATUS', job_id)
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
     response = build_request(token=token, url=url, method="GET")
@@ -27,10 +27,7 @@ def check_job_status(job_id, inputs, token, api_url, run_id):
         status = data["status"]
         conclusion = data["conclusion"]
         job_name = data["name"]
-        if data["run_id"] == run_id:
-            return status, conclusion, job_name
-        else:
-            return "current_attempt", "failure", job_name
+        return status, conclusion, job_name, data["run_id"]
     else:
         logger.error("Error fetching job status: {}".format(response.status))
 
@@ -42,7 +39,9 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
             retry_count = 0
             while retry_count < 3:
                 time.sleep(5)
-                status, conclusion, job_name = check_job_status(job_id, inputs, token, api_url, run_id)
+                status, conclusion, job_name, used_run_id_by_job_id = check_job_status(job_id, inputs, token, api_url)
+                logger.info("This the global run id {}".format(run_id))
+                logger.info("This the used run_id {} by job {}".format(used_run_id_by_job_id, job_name))
                 if status == "completed" and conclusion == "failure":
                     action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', job_id)
                     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
@@ -50,7 +49,6 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
                     if response.status == 204:
                         logger.info("retry count {} for job {}".format(retry_count, job_name))
                         logger.info("Job {} re-run made with success".format(job_name))
-                        retry_count += 1
                     elif response.status == 403:
                         logger.info("Job {} re-run has an issue with status {}".format(job_name, response.status))
                         logger.info("log data {}".format(response.data))
