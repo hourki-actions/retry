@@ -63,6 +63,7 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
                     retry_count += 1
                 elif status == "current_attempt" and conclusion == "failure":
                     logger.error("cannot execute Job {} rerun from the current attempt".format(job_name))
+                    retry_count += 1
                 else:
                     logger.info("retry {} for job {}".format(retry_count, job_name))
                     retry_count += 1
