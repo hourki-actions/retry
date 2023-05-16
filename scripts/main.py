@@ -30,7 +30,7 @@ def check_job_status(job_id, inputs, token, api_url, run_id):
         if data["run_id"] == run_id:
             return status, conclusion, job_name
         else:
-            logger.error("job {} us not from the current workflow run attempt".format(data["name"]))
+            return "current_attempt", "failure", job_name
     else:
         logger.error("Error fetching job status: {}".format(response.status))
 
@@ -59,8 +59,10 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
                     logger.info("Job {} has been completed with {}".format(job_name, conclusion))
                     break
                 elif status == "in_progress":
-                    logger.error("Job {} is in progress".format(job_name))
+                    logger.info("Job {} is in progress".format(job_name))
                     retry_count += 1
+                elif status == "current_attempt" and conclusion == "failure":
+                    logger.error("cannot execute Job {} rerun from the current attempt".format(job_name))
                 else:
                     logger.info("retry {} for job {}".format(retry_count, job_name))
                     retry_count += 1
