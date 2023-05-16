@@ -18,7 +18,7 @@ class RepoInputs:
 logger = Logger('Retry.check')
 
 
-def check_job_status(job_id, inputs, token, api_url):
+def check_job_status(job_id, inputs, token, api_url, run_id):
     action_path = types.get_action_path('FETCH_JOB_STATUS', job_id)
     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
     response = build_request(token=token, url=url, method="GET")
@@ -27,7 +27,10 @@ def check_job_status(job_id, inputs, token, api_url):
         status = data["status"]
         conclusion = data["conclusion"]
         job_name = data["name"]
-        return status, conclusion, job_name
+        if data["run_id"] == run_id:
+            return status, conclusion, job_name
+        else:
+            logger.error("job {} us not from the current workflow run attempt".format(data["name"]))
     else:
         logger.error("Error fetching job status: {}".format(response.status))
 
@@ -39,7 +42,7 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
             retry_count = 0
             while retry_count < 3:
                 time.sleep(5)
-                status, conclusion, job_name = check_job_status(job_id, inputs, token, api_url)
+                status, conclusion, job_name = check_job_status(job_id, inputs, token, api_url, run_id)
                 if status == "completed" and conclusion == "failure":
                     action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', job_id)
                     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
