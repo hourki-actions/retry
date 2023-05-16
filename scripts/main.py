@@ -50,6 +50,7 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
                         retry_count += 1
                     elif response.status == 403:
                         logger.info("Job {} re-run has an issue with status {}".format(job_name, response.status))
+                        logger.info("log data {}".format(response.data))
                         retry_count += 1
                 elif status == "completed" and conclusion == "success":
                     logger.info("Job {} has been completed with {}".format(job_name, conclusion))
