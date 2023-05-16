@@ -44,15 +44,18 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
                     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
                     response = build_request(token=token, url=url, method="POST")
                     if response.status == 204:
-                        logger.info("retry count {}".format(retry_count))
+                        logger.info("retry count {} for job {}".format(retry_count, job_id))
                         logger.info("Job {} re-run made with success".format(job_id))
-                    retry_count += 1
+                        retry_count += 1
+                    elif response.status == 403:
+                        logger.info("Job {} re-run has an issue with status".format(response.status))
+                        retry_count += 1
                 elif status == "completed" and conclusion == "success":
                     logger.info("Job {} has been completed with {}".format(job_id, conclusion))
                     break
-                elif status != "in_progress" and status != "queued":
-                    logger.error("Job {} has an unexpected status: {}".format(job_id, status))
-                    break
+                elif status == "in_progress":
+                    logger.error("Job {} is in progress".format(job_id))
+                    retry_count += 1
                 else:
                     logger.info("retry {} for job {}".format(retry_count, job_id))
                     retry_count += 1
