@@ -26,7 +26,8 @@ def check_job_status(job_id, inputs, token, api_url):
         data = json.loads(response.data)
         status = data["status"]
         conclusion = data["conclusion"]
-        return status, conclusion
+        job_name = data["name"]
+        return status, conclusion, job_name
     else:
         logger.error("Error fetching job status: {}".format(response.status))
 
@@ -38,29 +39,29 @@ def retry_from_dispatched_event(run_id, token, failed_jobs_ids, api_url, inputs)
             retry_count = 0
             while retry_count < 3:
                 time.sleep(5)
-                status, conclusion = check_job_status(job_id, inputs, token, api_url)
+                status, conclusion, job_name = check_job_status(job_id, inputs, token, api_url)
                 if status == "completed" and conclusion == "failure":
                     action_path = types.get_action_path('RERUN_SINGLE_FAILED_JOB', job_id)
                     url = build_url(api_url=api_url, owner=inputs.owner, repo=inputs.repo, action_path=action_path)
                     response = build_request(token=token, url=url, method="POST")
                     if response.status == 204:
-                        logger.info("retry count {} for job {}".format(retry_count, job_id))
-                        logger.info("Job {} re-run made with success".format(job_id))
+                        logger.info("retry count {} for job {}".format(retry_count, job_name))
+                        logger.info("Job {} re-run made with success".format(job_name))
                         retry_count += 1
                     elif response.status == 403:
-                        logger.info("Job {} re-run has an issue with status".format(response.status))
+                        logger.info("Job {} re-run has an issue with status {}".format(job_name, response.status))
                         retry_count += 1
                 elif status == "completed" and conclusion == "success":
-                    logger.info("Job {} has been completed with {}".format(job_id, conclusion))
+                    logger.info("Job {} has been completed with {}".format(job_name, conclusion))
                     break
                 elif status == "in_progress":
-                    logger.error("Job {} is in progress".format(job_id))
+                    logger.error("Job {} is in progress".format(job_name))
                     retry_count += 1
                 else:
-                    logger.info("retry {} for job {}".format(retry_count, job_id))
+                    logger.info("retry {} for job {}".format(retry_count, job_name))
                     retry_count += 1
             else:
-                logger.error("Maximum retries '{}' reached for job {}".format(retry_count, job_id))
+                logger.info("Maximum retries '{}' has been reached for job {}".format(retry_count, job_name))
     else:
         logger.info("TBD")
 
